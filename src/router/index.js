@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Index from '../components/Home/Index.vue';
-import User from '../components/User.vue';
+import Apps from '../components/Apps/Index.vue';
 import Test from '../components/Home/Test.vue';
 import Login from '../components/Auth/Login.vue';
 
@@ -10,7 +10,8 @@ const router = createRouter({
     routes: [
       {path: '/login', name: 'login', component: Login, name:'login'},
       { path: '/', component: Index, meta: {requireAuth: true} },
-      { path: '/users', component: User },
+      { path: '/connect', component: Index, meta: {requireAuth: true} },
+      { path: '/apps', name: 'apps', component: Apps, meta: {requireAuth: true} },
       { path: '/test', component: Test },
     ]
   })

@@ -30,7 +30,8 @@
                               @dragstart="dragStartHandler(item, index)"
                               @dragover="dragOverHandler(index)"
                               @drop="dropHandler(index)">
-                              <label for="btn-radio-vertical-1" type="button" class="btn active">{{ item }}</label>
+                              <label for="btn-radio-vertical-1" type="button" 
+                              class="btn active">{{ item.field }}</label>
                             </li>
                           </ul>
                         </div>
@@ -39,6 +40,10 @@
                       <div class="tab-pane" id="tabs-profile-9" role="tabpanel">
                         <h4>Profile tab</h4>
                         <div>Fringilla egestas nunc quis tellus diam rhoncus ultricies tristique enim at diam, sem nunc amet, pellentesque id egestas velit sed</div>
+                        
+                        <a class="btn" data-bs-toggle="offcanvas" href="#offcanvasTop" role="button" aria-controls="offcanvasTop">
+                          Toggle top offcanvas
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -73,8 +78,12 @@
                               :draggable="true"
                               @dragstart="dragStartList1Handler(item, index)">
 
-                                <div class="ms-2 me-auto">
-                                <div class="fw-bold">{{ item }}</div>
+                                <div class="ms-2 me-auto"
+                                  data-bs-toggle="offcanvas" href="#offcanvasStart" 
+                                  role="button" aria-controls="offcanvasStart"
+                                  @click="selectedField = index"
+                                >
+                                  <div class="fw-bold">{{ item.name }}</div>
                                   Field
                                 </div>
                                 <span class="rounded-pill pr-2" @click="list1.splice(index, 1);">x</span>
@@ -133,19 +142,91 @@
 
                   <div class="col-md-9 pt-3">
                     <div class="card" style="min-height: 563px;">
-                      <highcharts v-if="data.list" :options="data.list.chartOptions"></highcharts>
+                      <highcharts 
+                        v-if="data.list?.type == 'chart'" 
+                        :options="data.list.chartOptions"
+                        :data="chartData"
+                        :yAxisTitle="list1[0]"
+                        >
+                      </highcharts>
+
+                      <span v-if="data.list?.type == 'count'">
+                        <div class="card">
+                          <slot v-for="(item, index) in data.countValue" :key="index">
+                            <div class="card-body">
+                              <h3 class="card-title">{{ item.name }}</h3>
+                            </div>
+                            <!-- Card footer -->
+                            <div class="card-footer">
+                              <a href="#" class="btn btn-primary">{{ item.value }}</a>
+                            </div>
+                          </slot>
+                        </div>
+                      </span>
+
                     </div>
                   </div>
               </div>
             </div>
         </div>
     </slot>
+
+    <div class="offcanvas offcanvas-start" 
+        tabindex="-1" id="offcanvasStart" 
+        aria-labelledby="offcanvasStartLabel"
+        style="width: 326px !important;"
+        >
+      <div class="offcanvas-header">
+        <h2 class="offcanvas-title" id="offcanvasStartLabel">Extra Rules</h2>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <div>
+          <input v-if="selectedField != null && list1.length > 0 && list1[selectedField] != undefined" type="text" 
+            class="form-control is-valid mb-2" 
+            v-model="list1[selectedField].name"
+            >
+
+          <div class="mb-3">
+            <label class="form-label">Aggregation Type</label>
+            <div class="form-selectgroup">
+              <label class="form-selectgroup-item"
+              v-for="(item, index) in ['SUM', 'COUNT', 'AVERAGE']" :key="index">
+                <input type="radio" name="icons" value="home" class="form-selectgroup-input" checked>
+                <span class="form-selectgroup-label"
+                 @click="list1[selectedField].aggr = item.toLowerCase()">
+                  <!-- <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l-2 0l9 -9l9 9l-2 0" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /></svg> -->
+                  {{ item }}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Custom</label>
+            <div class="">
+              <label class="form-selectgroup-item">
+                <textarea class="form-control" placeholder="product * quantity"
+                @change="list1[selectedField].customAggr = $event.target.value, analize()"></textarea>
+              </label>
+            </div>
+          </div>
+        </div>
+        <!-- <div class="mt-3">
+          <button class="btn btn-primary" type="button" data-bs-dismiss="offcanvas">
+            Close offcanvas
+          </button>
+        </div> -->
+      </div>
+    </div>
+
 </template>
 
 <script>
 import ChartList from './../Chart/ChartList.vue';
-import {Chart} from 'highcharts-vue'
+import Chart from '../Chart/HighChart.vue'
 import axios from 'axios'
+import ChartHelper from "../../helpers/chartHelper.js";
 
 export default {
   components:{
@@ -159,6 +240,11 @@ export default {
           this.analize();
         },
         deep: true
+    },
+    "data.list":{
+      handler: function() {
+        this.analize();
+      }
     }
   },
 
@@ -178,6 +264,11 @@ export default {
       list1Dragging: false,
       list2Dragging: false,
       list3Dragging: false,
+
+      chartData: [],
+
+      // 
+      selectedField:null
     }
   },
   created(){
@@ -195,13 +286,45 @@ export default {
     analize(){
       var params = {
         appId: 1,
-        yAxis: this.list1,
-        xAxis: this.list2
+        yAxis: this.list1?.map(e => {return e.field}),
+        xAxis: this.list2?.map(e => {return e.field}),
+        filterBy: this.filterBy?.map(e => {return e.field}),
+        selectedChart: this.data.list?.sectionType ?? '',
+        rawData:{
+          yAxis: this.list1,
+          xAxis: this.list2,
+          filterBy: this.list3,
+        },
+
       }
       axios.post('/api/v1/analize', params).then(res =>{
-        console.log(JSON.parse(res.data));
+        console.log(res);
+        this.processData(res.data);
       })
       console.log('hit analize');
+    },
+
+    processData(pdArray){
+      const chartHelper = new ChartHelper();
+
+      var selectedChart = this.data.list;
+      if (selectedChart.sectionType == 'pieChart') {
+        pdArray = JSON.parse(pdArray)
+
+        pdArray = chartHelper.barChartDataProcess(pdArray)
+        this.data.list.chartOptions.series[0].data = pdArray
+
+      }else if(selectedChart.sectionType == 'barChart'){
+
+        pdArray = JSON.parse(pdArray)
+        pdArray = chartHelper.barChartDataProcess(pdArray)
+        this.data.list.chartOptions.series[0].data = pdArray
+        var selectedField = this.list1.map(e => {return e.name})
+        this.data.list ? this.data.list.chartOptions.yAxis.title.text = JSON.stringify(selectedField) : 'a'
+      
+      } else if(selectedChart.sectionType == 'count'){
+        this.data.countValue = pdArray
+      }
     },
 
     dragStartHandler(item, index) {
