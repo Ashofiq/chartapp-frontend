@@ -21,6 +21,17 @@
                   <div class="card-body">
                     <div class="tab-content">
                       <div class="tab-pane active show" id="tabs-home-9" role="tabpanel">
+                        
+                        <!-- app dropdown -->
+                        <div class="mb-3">
+                          <select v-model="data.appId" @change="appSelect()" class="form-control form-control-sm form-select">
+                            <option :value="null">Select App & Analize</option>
+                            <slot v-for="(app, index) in apps" :key="index">
+                              <option :value="app.id">{{ app.name }}</option>
+                            </slot>
+                          </select>
+                        </div>
+                        
                         <div>
                           <h2>Fields List</h2>
                           <ul >
@@ -127,7 +138,7 @@
                               @dragstart="dragStartList1Handler(item, index)">
 
                                   <div class="ms-2 me-auto">
-                                  <div class="fw-bold">{{ item }}</div>
+                                  <div class="fw-bold">{{ item.name }}</div>
                                     Field
                                   </div>
                                   <span class="rounded-pill pr-2" @click="list3.splice(index, 1);">x</span>
@@ -141,28 +152,49 @@
                   </div>
 
                   <div class="col-md-9 pt-3">
+                    
                     <div class="card" style="min-height: 563px;">
-                      <highcharts 
-                        v-if="data.list?.type == 'chart'" 
-                        :options="data.list.chartOptions"
-                        :data="chartData"
-                        :yAxisTitle="list1[0]"
-                        >
-                      </highcharts>
+                      <div class="row">
 
-                      <span v-if="data.list?.type == 'count'">
-                        <div class="card">
-                          <slot v-for="(item, index) in data.countValue" :key="index">
-                            <div class="card-body">
-                              <h3 class="card-title">{{ item.name }}</h3>
+                        <div class="col-md-11">
+                          <span v-if="data.list?.type == 'chart'">
+                            <highcharts 
+                              :options="data.list.chartOptions"
+                              :data="chartData"
+                              :yAxisTitle="list1[0]"
+                              >
+                            </highcharts>
+                          </span>
+
+                          <span v-if="data.list?.type == 'count'">
+                            <div class="card">
+                              <slot v-for="(item, index) in data.countValue" :key="index">
+                                <div class="card-body">
+                                  <h3 class="card-title">{{ item.name }}</h3>
+                                </div>
+                                <!-- Card footer -->
+                                <div class="card-footer">
+                                  <a href="#" class="btn btn-primary">{{ item.value }}</a>
+                                </div>
+                              </slot>
                             </div>
-                            <!-- Card footer -->
-                            <div class="card-footer">
-                              <a href="#" class="btn btn-primary">{{ item.value }}</a>
-                            </div>
-                          </slot>
+                          </span>
                         </div>
-                      </span>
+
+                        <div class="col-md-1" style="padding-left: 0px !important;">
+                          <div class="list-group list-group-flush">
+                            <a @click="save()" class="list-group-item text-center list-group-item-action active" aria-current="true" style="cursor: pointer;">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-save" viewBox="0 0 16 16">
+                                <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/>
+                              </svg>
+                              Save
+                            </a>
+
+                           
+                          </div>
+                        </div>
+
+                      </div>
 
                     </div>
                   </div>
@@ -195,7 +227,6 @@
                 <input type="radio" name="icons" value="home" class="form-selectgroup-input" checked>
                 <span class="form-selectgroup-label"
                  @click="list1[selectedField].aggr = item.toLowerCase()">
-                  <!-- <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l-2 0l9 -9l9 9l-2 0" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /></svg> -->
                   {{ item }}
                 </span>
               </label>
@@ -211,6 +242,27 @@
               </label>
             </div>
           </div>
+
+          <div class="mb-4">
+            <label class="form-label">Filter Date From</label>
+            <div class="input-icon mb-2">
+                <input type="date" class="form-control" 
+                v-model="fromDate"
+                placeholder="Select a date" 
+                id="datepicker-icon" >
+              </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Filter Date To</label>
+            <div class="input-icon mb-2">
+                <input type="date" class="form-control " 
+                v-model="toDate"
+                placeholder="Select a date" 
+                id="datepicker-icon" >
+              </div>
+          </div>
+
         </div>
         <!-- <div class="mt-3">
           <button class="btn btn-primary" type="button" data-bs-dismiss="offcanvas">
@@ -227,6 +279,9 @@ import ChartList from './../Chart/ChartList.vue';
 import Chart from '../Chart/HighChart.vue'
 import axios from 'axios'
 import ChartHelper from "../../helpers/chartHelper.js";
+import { toast } from 'vue3-toastify';
+import 'vue3-toastify/dist/index.css';
+import { Notification } from "../../helpers/Notification.js";
 
 export default {
   components:{
@@ -251,11 +306,10 @@ export default {
   data(){
     return{
       data:{
-        appId:1
+        appId:null
       },
-      fieldList: [
-          
-      ],
+      fieldList: [],
+      apps:[],
       list1: [],
       list2: [],
       list3: [],
@@ -266,13 +320,16 @@ export default {
       list3Dragging: false,
 
       chartData: [],
-
       // 
-      selectedField:null
+      selectedField:null,
+
+      fromDate: null,
+      toDate: null
     }
   },
   created(){
     this.getFieldList();
+    this.getAllApp();
   },
   methods: {
 
@@ -283,17 +340,50 @@ export default {
           })
     },
 
-    analize(){
+    save(){
       var params = {
-        appId: 1,
+        appId: this.data.appId,
         yAxis: this.list1?.map(e => {return e.field}),
         xAxis: this.list2?.map(e => {return e.field}),
-        filterBy: this.filterBy?.map(e => {return e.field}),
+        filterBy: this.list3?.map(e => {return e.field}),
+        selectedChart: this.data.list?.sectionType ?? '',
+        visualItem: this.data.list,
+        rawData:{
+          yAxis: this.list1,
+          xAxis: this.list2,
+          filterBy: this.list3,
+        },
+
+      }
+
+      if (confirm('Are you sure, You want to save')) {
+        axios.post('/api/v1/save-visual-items', params).then(res => {
+          console.log(res);
+          Toast.fire({
+              icon: 'success',
+              title: 'Save Successfully'
+          })
+        })
+      }
+
+      
+    },
+
+    analize(){
+      var params = {
+        appId: this.data.appId,
+        yAxis: this.list1?.map(e => {return e.field}),
+        xAxis: this.list2?.map(e => {return e.field}),
+        filterBy: this.list3?.map(e => {return e.field}),
         selectedChart: this.data.list?.sectionType ?? '',
         rawData:{
           yAxis: this.list1,
           xAxis: this.list2,
           filterBy: this.list3,
+          filterDate: {
+            fromDate: this.fromDate,
+            toDate:this.toDate
+          }
         },
 
       }
@@ -320,11 +410,25 @@ export default {
         pdArray = chartHelper.barChartDataProcess(pdArray)
         this.data.list.chartOptions.series[0].data = pdArray
         var selectedField = this.list1.map(e => {return e.name})
-        this.data.list ? this.data.list.chartOptions.yAxis.title.text = JSON.stringify(selectedField) : 'a'
+        // this.data.list ? this.data.list.chartOptions.yAxis.title.text = JSON.stringify(selectedField) : 'a'
       
       } else if(selectedChart.sectionType == 'count'){
         this.data.countValue = pdArray
       }
+    },
+
+    getAllApp(){
+      axios.get(process.env.VUE_APP_BASE_URL+"/api/v1/app")
+        .then(res =>{
+          console.log('app', res.data);
+            this.apps = res.data
+        })
+    },
+
+    appSelect(){
+      this.data.appId
+      this.getFieldList()
+      console.log(this.data.appId);
     },
 
     dragStartHandler(item, index) {
@@ -400,4 +504,12 @@ export default {
     padding: 3px !important;
     background: #F1F5F9;
   }
+
+  .block {
+          background-color: blue;
+          margin-left: auto;
+          margin-right: 0;
+          height: auto;
+          width: 60px;
+        }
 </style>

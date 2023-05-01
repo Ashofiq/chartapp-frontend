@@ -206,7 +206,7 @@ export default {
             formData.append('name', this.app.name)
             formData.append('type', this.app.type)
             formData.append('appId', this.app.id)
-            formData.append('googleSheetUrl', 'null')
+            formData.append('googleSheetUrl', this.app.googleSheetUrl)
 
             axios
                 .post(process.env.VUE_APP_BASE_URL+"/api/v1/app/update", formData)
